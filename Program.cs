@@ -3,7 +3,7 @@ using DSharpPlus;
 using dotenv.net;
 
 
-namespace Epic
+namespace Elfin
 {
     public class Program
     {
