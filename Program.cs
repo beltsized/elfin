@@ -16,7 +16,7 @@ namespace Elfin
 
         public static async Task ElfinProcess()
         {
-            var elfin = new ElfinClient(new ElfinClientData()
+            var elfin = new ElfinClient(new ElfinData()
             {
                 Token = Environment.GetEnvironmentVariable("DISCORDTOKEN"),
                 Intents = DiscordIntents.All,
@@ -24,16 +24,7 @@ namespace Elfin
                 Prefix = "elf."
             });
 
-            elfin.SetCommands(new ElfinCommand[] {
-                new ElfinCommand()
-                {
-                    Name = "ping",
-                    Respond = async (message, args) =>
-                    {
-                        await message.RespondAsync("Pong!");
-                    }
-                }
-            });
+            elfin.LoadCommands();
 
             elfin.RawClient.Ready += async (self, packet) =>
             {
