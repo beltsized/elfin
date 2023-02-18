@@ -11,10 +11,10 @@ namespace Elfin
         public static void Main(string[] args)
         {
             DotEnv.Load();
-            MainAsync().GetAwaiter().GetResult();
+            ElfinProcess().GetAwaiter().GetResult();
         }
 
-        public static async Task MainAsync()
+        public static async Task ElfinProcess()
         {
             var elfin = new ElfinClient(new ElfinClientData()
             {
