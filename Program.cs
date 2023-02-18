@@ -1,7 +1,7 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using DSharpPlus;
+using Microsoft.Extensions.Logging;
 using dotenv.net;
-
 
 namespace Elfin
 {
@@ -15,26 +15,30 @@ namespace Elfin
 
         static async Task MainAsync()
         {
-            var BotClient = new DiscordClient(new DiscordConfiguration()
+            var ElfinClient = new DiscordClient(new DiscordConfiguration()
             {
                 Token = Environment.GetEnvironmentVariable("DISCORDTOKEN"),
                 TokenType = TokenType.Bot,
-                Intents = DiscordIntents.All
+                Intents = DiscordIntents.All,
+                MinimumLogLevel = LogLevel.None
             });
 
-            BotClient.Ready += async (Self, Event) =>
+            ElfinClient.Ready += async (Self, Event) =>
             {
                 Console.WriteLine("Elfin Is Ready!!");
             };
 
 
-            BotClient.MessageCreated += async (Self, Event) =>
+            ElfinClient.MessageCreated += async (Self, Event) =>
             {
-                if (Event.Message.Content.ToLower() == "elf.ping")
-                    await Event.Message.RespondAsync("Pong!");
+                _ = Task.Run(async () =>
+                {
+                    if (Event.Message.Content.ToLower() == "elf.ping")
+                        await Event.Message.RespondAsync("Pong!");
+                });
             };
 
-            await BotClient.ConnectAsync();
+            await ElfinClient.ConnectAsync();
             await Task.Delay(-1);
         }
     }
