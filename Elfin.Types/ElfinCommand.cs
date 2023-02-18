@@ -5,15 +5,16 @@ namespace Elfin.Types
     public class ElfinCommand
     {
         public required string Name;
-        public required Action<DiscordMessage> Respond;
+        public required Action<DiscordMessage, string[]> Respond;
+        public bool Enabled = true;
 
         public ElfinCommand()
         { }
 
-        public ElfinCommand(ElfinCommand CommandData)
+        public ElfinCommand(ElfinCommand commandData)
         {
-            this.Name = CommandData.Name;
-            this.Respond = CommandData.Respond;
+            this.Name = commandData.Name;
+            this.Respond = commandData.Respond;
         }
     }
 }

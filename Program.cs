@@ -1,45 +1,51 @@
-﻿using System.Threading.Tasks;
+﻿using Elfin.Types;
+using Elfin.Core;
 using DSharpPlus;
 using Microsoft.Extensions.Logging;
 using dotenv.net;
 
 namespace Elfin
 {
-    public class Program
+    class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             DotEnv.Load();
             MainAsync().GetAwaiter().GetResult();
         }
 
-        static async Task MainAsync()
+        public static async Task MainAsync()
         {
-            var ElfinClient = new DiscordClient(new DiscordConfiguration()
+            var elfin = new ElfinClient(new ElfinClientData()
             {
                 Token = Environment.GetEnvironmentVariable("DISCORDTOKEN"),
-                TokenType = TokenType.Bot,
                 Intents = DiscordIntents.All,
-                MinimumLogLevel = LogLevel.None
+                LogLevel = LogLevel.None,
+                Prefix = "elf."
             });
 
-            ElfinClient.Ready += async (Self, Event) =>
+            elfin.SetCommands(new ElfinCommand[] {
+                new ElfinCommand()
+                {
+                    Name = "ping",
+                    Respond = async (message, args) =>
+                    {
+                        await message.RespondAsync("Pong!");
+                    }
+                }
+            });
+
+            elfin.RawClient.Ready += async (self, packet) =>
             {
                 Console.WriteLine("Elfin Is Ready!!");
             };
 
-
-            ElfinClient.MessageCreated += async (Self, Event) =>
+            elfin.RawClient.MessageCreated += async (self, packet) =>
             {
-                _ = Task.Run(async () =>
-                {
-                    if (Event.Message.Content.ToLower() == "elf.ping")
-                        await Event.Message.RespondAsync("Pong!");
-                });
+                elfin.HandlePossibleCommand(packet);
             };
 
-            await ElfinClient.ConnectAsync();
-            await Task.Delay(-1);
+            elfin.Login().GetAwaiter().GetResult();
         }
     }
 }
