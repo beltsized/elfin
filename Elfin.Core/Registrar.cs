@@ -52,7 +52,7 @@ namespace Elfin.Core
                 {
                     Name = commandName,
                     Aliases = aliases,
-                    Respond = (DiscordMessage message, string[] args) => command.Invoke(null, new object[] { message, args })
+                    Respond = (ElfinClient elfin, ElfinCommandContext context) => command.Invoke(null, new object[] { elfin, context })
                 };
 
                 commands.Add(newCommand);
@@ -70,12 +70,12 @@ namespace Elfin.Core
             {
                 MethodInfo? initializer = ev.GetMethod("Initalize");
                 Attribute? attr = ev.GetCustomAttribute(typeof(ElfinEventAttribute));
-                string eventName = ((ElfinEventAttribute)attr).Name;
+                string eventName = ((ElfinEventAttribute)attr!).Name;
 
                 ElfinEvent newEvent = new()
                 {
                     Name = eventName,
-                    Initialize = () => initializer.Invoke(null, new object[] { this.Client })
+                    Initialize = () => initializer!.Invoke(null, new object[] { this.Client })
                 };
 
                 events.Add(newEvent);

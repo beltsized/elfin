@@ -1,3 +1,4 @@
+using Elfin.Core;
 using DSharpPlus.Entities;
 
 namespace Elfin.Types
@@ -6,7 +7,7 @@ namespace Elfin.Types
     {
         public required string Name { get; init; }
         public required string[] Aliases { get; init; }
-        public required Action<DiscordMessage, string[]>? Respond { get; init; }
+        public required Action<ElfinClient, ElfinCommandContext>? Respond { get; init; }
         public bool Enabled = true;
 
         public ElfinCommand()

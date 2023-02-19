@@ -1,5 +1,10 @@
 using Elfin.Attributes;
+using Elfin.Types;
+using Elfin.Core;
 using DSharpPlus.Entities;
+using System;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace Elfin.Commands
 {
@@ -9,17 +14,26 @@ namespace Elfin.Commands
         [ElfinCommand("helloworld")]
         [ElfinAliases(new string[] { "hworld" })]
         [ElfinDescription("Hello, world!")]
-        public static async Task HelloWorld(DiscordMessage message, string[] args)
+        public static async Task HelloWorld(ElfinClient elfin, ElfinCommandContext context)
         {
-            await message.RespondAsync("Hello, world!");
+            await context.Message.RespondAsync("Hello, world!");
         }
 
-        [ElfinCommand("userinfo")]
-        [ElfinAliases(new string[] { "uinfo" })]
-        [ElfinDescription("Sends information on a user.")]
-        public static async Task UserInfo(DiscordMessage message, string[] args)
+        [ElfinCommand("neko")]
+        [ElfinAliases(new string[] { "nekoimg", "nekoimage" })]
+        [ElfinDescription("Sends a random image of a neko.")]
+        public static async Task Neko(ElfinClient elfin, ElfinCommandContext context)
         {
-            await message.RespondAsync("some info here idk!");
+            var response = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/neko");
+            var rawResponse = await response.Content.ReadAsStringAsync();
+            dynamic? data = JsonConvert.DeserializeObject(rawResponse);
+            DiscordEmbedBuilder embed = new()
+            {
+                Color = new DiscordColor("#2F3136"),
+                ImageUrl = data!.url
+            };
+
+            await context.Message.RespondAsync(embed.Build());
         }
     }
 }

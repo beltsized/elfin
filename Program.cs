@@ -18,7 +18,7 @@ namespace Elfin
         {
             var elfin = new ElfinClient(new ElfinData()
             {
-                Token = Environment.GetEnvironmentVariable("DISCORDTOKEN"),
+                Token = Environment.GetEnvironmentVariable("DISCORDTOKEN")!,
                 Intents = DiscordIntents.All,
                 LogLevel = LogLevel.None,
                 Prefix = "elf."

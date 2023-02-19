@@ -4,13 +4,15 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace Elfin.Core
 {
     public class ElfinClient
     {
         public ElfinRegistrar Registrar { get; init; }
-        public DiscordClient? RawClient { get; init; }
+        public DiscordClient RawClient { get; init; }
+        public HttpClient HttpClient { get; init; }
         public ElfinEvent[] Events = { };
         public ElfinCommand[] Commands = { };
         public string Prefix;
@@ -26,6 +28,7 @@ namespace Elfin.Core
                 MinimumLogLevel = data.LogLevel
             });
 
+            this.HttpClient = new HttpClient();
             this.Prefix = data.Prefix;
         }
 
@@ -54,7 +57,8 @@ namespace Elfin.Core
         {
             this.Events = this.Registrar.ReadEvents();
 
-            foreach (ElfinEvent ev in this.Events) {
+            foreach (ElfinEvent ev in this.Events)
+            {
                 ev.Initialize();
             }
         }
@@ -82,7 +86,13 @@ namespace Elfin.Core
 
                 if (command != null && command.Enabled)
                 {
-                    command.Respond(message, components[1..]);
+                    ElfinCommandContext context = new()
+                    {
+                        Message = message,
+                        Args = components[1..]
+                    };
+
+                    command.Respond!(this, context);
                 }
             }
         }

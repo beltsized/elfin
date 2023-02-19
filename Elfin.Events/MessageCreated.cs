@@ -10,7 +10,14 @@ namespace Elfin.Events
         {
             elfin.RawClient.MessageCreated += async (self, packet) =>
             {
-                elfin.HandlePossibleCommand(packet);
+                try
+                {
+                    elfin.HandlePossibleCommand(packet);
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine(exception);
+                }
             };
         }
     }
