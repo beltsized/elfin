@@ -24,8 +24,8 @@ namespace Elfin.Commands
         [ElfinDescription("Sends a random image of a neko.")]
         public static async Task Neko(ElfinClient elfin, ElfinCommandContext context)
         {
-            var response = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/neko");
-            var rawResponse = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/neko");
+            string rawResponse = await response.Content.ReadAsStringAsync();
             dynamic? data = JsonConvert.DeserializeObject(rawResponse);
             DiscordEmbedBuilder embed = new()
             {
