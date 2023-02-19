@@ -88,7 +88,7 @@ namespace Elfin.Core
                 {
                     ElfinCommandContext context = new()
                     {
-                        Message = message,
+                        Packet = packet,
                         Args = components[1..]
                     };
 
