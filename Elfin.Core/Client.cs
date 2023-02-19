@@ -17,7 +17,7 @@ namespace Elfin.Core
 
         public ElfinClient(ElfinData data)
         {
-            this.Registrar = new ElfinRegistrar();
+            this.Registrar = new ElfinRegistrar(this);
             this.RawClient = new DiscordClient(new DiscordConfiguration()
             {
                 Token = data.Token,
@@ -55,11 +55,7 @@ namespace Elfin.Core
             this.Events = this.Registrar.ReadEvents();
 
             foreach (ElfinEvent ev in this.Events) {
-                /*
-                this.RawClient[ev] += async (self, packet) => {
-
-                };
-                */
+                ev.Initialize();
             }
         }
 

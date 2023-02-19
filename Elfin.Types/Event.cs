@@ -5,7 +5,7 @@ namespace Elfin.Types
     public class ElfinEvent
     {
         public required string Name { get; init; }
-        public required Action<DiscordMessage, string[]>? Respond { get; init; }
+        public required Action Initialize { get; init; }
 
         public ElfinEvent()
         { }
@@ -13,7 +13,7 @@ namespace Elfin.Types
         public ElfinEvent(ElfinEvent eventData)
         {
             this.Name = eventData.Name;
-            this.Respond = eventData.Respond;
+            this.Initialize = eventData.Initialize;
         }
     }
 }

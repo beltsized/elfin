@@ -25,17 +25,7 @@ namespace Elfin
             });
 
             elfin.LoadCommands();
-
-            elfin.RawClient.Ready += async (self, packet) =>
-            {
-                Console.WriteLine("Elfin Is Ready!!");
-            };
-
-            elfin.RawClient.MessageCreated += async (self, packet) =>
-            {
-                elfin.HandlePossibleCommand(packet);
-            };
-
+            elfin.LoadEvents();
             await elfin.Login();
         }
     }

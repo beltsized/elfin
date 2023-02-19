@@ -8,6 +8,13 @@ namespace Elfin.Core
 {
     public class ElfinRegistrar
     {
+        public ElfinClient Client;
+
+        public ElfinRegistrar(ElfinClient elfin)
+        {
+            this.Client = elfin;
+        }
+
         public IEnumerable<Type> GetTypesWithAttribute<T>() where T : Attribute
         {
             return typeof(Program).Assembly.GetTypes().Where(type => type.GetCustomAttributes(typeof(T), true).Length > 0);
@@ -61,14 +68,14 @@ namespace Elfin.Core
 
             foreach (Type ev in eventClasses)
             {
-                MethodInfo? response = ev.GetMethod("Respond");
+                MethodInfo? initializer = ev.GetMethod("Initalize");
                 Attribute? attr = ev.GetCustomAttribute(typeof(ElfinEventAttribute));
                 string eventName = ((ElfinEventAttribute)attr).Name;
 
                 ElfinEvent newEvent = new()
                 {
                     Name = eventName,
-                    Respond = (DiscordMessage message, string[] args) => response.Invoke(null, new object[] { message, args })
+                    Initialize = () => initializer.Invoke(null, new object[] { this.Client })
                 };
 
                 events.Add(newEvent);
