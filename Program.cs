@@ -8,10 +8,10 @@ namespace Elfin
 {
     class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             DotEnv.Load();
-            ElfinProcess().GetAwaiter().GetResult();
+            await ElfinProcess();
         }
 
         public static async Task ElfinProcess()
@@ -36,7 +36,7 @@ namespace Elfin
                 elfin.HandlePossibleCommand(packet);
             };
 
-            elfin.Login().GetAwaiter().GetResult();
+            await elfin.Login();
         }
     }
 }

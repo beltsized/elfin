@@ -9,10 +9,11 @@ namespace Elfin.Core
 {
     public class ElfinClient
     {
-        public DiscordClient? RawClient;
+        public ElfinRegistrar Registrar { get; init; }
+        public DiscordClient? RawClient { get; init; }
+        public ElfinEvent[] Events = { };
         public ElfinCommand[] Commands = { };
         public string Prefix;
-        public ElfinRegistrar Registrar;
 
         public ElfinClient(ElfinData data)
         {
@@ -49,49 +50,27 @@ namespace Elfin.Core
             this.Commands = this.Registrar.ReadCommands();
         }
 
-        public bool CheckIfCommandIsThisOne(string name, ElfinCommand command)
+        public void LoadEvents()
         {
-            Console.WriteLine(name, command.Name, command.Aliases);
-            if (name == command.Name)
-            {
-                return true;
-            }
-            else
-            {
-                foreach (string alias in command.Aliases)
-                {
-                    Console.WriteLine(alias);
-                    if (name == alias)
-                    {
-                        return true;
-                    }
-                }
+            this.Events = this.Registrar.ReadEvents();
 
-                return false;
+            foreach (ElfinEvent ev in this.Events) {
+                /*
+                this.RawClient[ev] += async (self, packet) => {
+
+                };
+                */
             }
+        }
+
+        public bool IsCompatible(string name, ElfinCommand command)
+        {
+            return name == command.Name || command.Aliases.Any(alias => name == alias);
         }
 
         public ElfinCommand? GetCommand(string name)
         {
-            foreach (ElfinCommand command in this.Commands)
-            {
-                bool itsThisOne = this.CheckIfCommandIsThisOne(name, command);
-
-                if (itsThisOne) {
-                    return command;
-                }
-            }
-
-            return null;
-        }
-
-        public string[] ConvertToArgs(string[] components)
-        {
-            List<string> args = new List<string>(components);
-
-            args.RemoveAt(0);
-
-            return args.ToArray();
+            return this.Commands.First(command => IsCompatible(name, command));
         }
 
         public void HandlePossibleCommand(MessageCreateEventArgs packet)
@@ -107,10 +86,7 @@ namespace Elfin.Core
 
                 if (command != null && command.Enabled)
                 {
-                    Console.WriteLine(true);
-                    string[] args = this.ConvertToArgs(components);
-
-                    command.Respond(message, args);
+                    command.Respond(message, components[1..]);
                 }
             }
         }

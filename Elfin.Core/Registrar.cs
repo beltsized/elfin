@@ -10,74 +10,71 @@ namespace Elfin.Core
     {
         public IEnumerable<Type> GetTypesWithAttribute<T>() where T : Attribute
         {
-            foreach (Type type in typeof(Program).Assembly.GetTypes())
-            {
-                if (type.GetCustomAttributes(typeof(T), true).Length > 0)
-                {
-                    yield return type;
-                }
-            }
+            return typeof(Program).Assembly.GetTypes().Where(type => type.GetCustomAttributes(typeof(T), true).Length > 0);
         }
 
         public ElfinCommand[] ReadCommands()
         {
             List<ElfinCommand> commands = new List<ElfinCommand>();
+            IEnumerable<Type> groupClasses = GetTypesWithAttribute<ElfinGroupAttribute>();
+            IEnumerable<MethodInfo> commandClasses = groupClasses.SelectMany(type => type.GetMethods());
 
-            var progGroupClasses = GetTypesWithAttribute<ElfinGroupAttribute>();
-
-            Console.WriteLine(progGroupClasses.ToArray().Length);
-            foreach (Type type in progGroupClasses)
+            foreach (MethodInfo command in commandClasses)
             {
-                foreach (MethodInfo tMethod in type.GetMethods()) {
-                    Console.WriteLine(tMethod);
-                }
+                string commandName = "";
+                string[] aliases = { };
+                IEnumerable<Attribute> attributes = command.GetCustomAttributes();
 
-                MethodInfo[] methods = type.GetMethods();
-
-                Console.WriteLine(methods.Length);
-
-                foreach (MethodInfo typeMethod in methods)
+                foreach (Attribute attr in attributes)
                 {
-                    string commandName = "";
-                    string[] aliases = { };
-                    IEnumerable<Attribute> attributes = typeMethod.GetCustomAttributes();
+                    string? attrName = attr.ToString();
 
-                    foreach (Attribute attr in attributes)
+                    switch (attr)
                     {
-                        string? attrName = attr.ToString();
-
-                        if (attrName.Contains("Command"))
-                        {
+                        case ElfinCommandAttribute:
                             commandName = ((ElfinCommandAttribute)attr).Name;
-                        }
-                        else if (attrName.Contains("Aliases"))
-                        {
+
+                            break;
+                        case ElfinAliasesAttribute:
                             aliases = ((ElfinAliasesAttribute)attr).Aliases;
-                        }
+                            break;
                     }
-
-                    ElfinCommand newCommand = new()
-                    {
-                        Name = commandName,
-                        Aliases = aliases
-                    };
-
-                    newCommand.Respond = (DiscordMessage message, string[] args) =>
-                    {
-                        Console.WriteLine(111111);
-                        typeMethod.Invoke(newCommand, new object[] { message, args });
-                    };
-
-                    commands.Add(newCommand);
                 }
+
+                ElfinCommand newCommand = new()
+                {
+                    Name = commandName,
+                    Aliases = aliases,
+                    Respond = (DiscordMessage message, string[] args) => command.Invoke(null, new object[] { message, args })
+                };
+
+                commands.Add(newCommand);
             }
 
             return commands.ToArray();
         }
 
-        public void ReadEvents()
+        public ElfinEvent[] ReadEvents()
         {
+            List<ElfinEvent> events = new List<ElfinEvent>();
+            IEnumerable<Type> eventClasses = GetTypesWithAttribute<ElfinEventAttribute>();
 
+            foreach (Type ev in eventClasses)
+            {
+                MethodInfo? response = ev.GetMethod("Respond");
+                Attribute? attr = ev.GetCustomAttribute(typeof(ElfinEventAttribute));
+                string eventName = ((ElfinEventAttribute)attr).Name;
+
+                ElfinEvent newEvent = new()
+                {
+                    Name = eventName,
+                    Respond = (DiscordMessage message, string[] args) => response.Invoke(null, new object[] { message, args })
+                };
+
+                events.Add(newEvent);
+            }
+
+            return events.ToArray();
         }
     }
 }

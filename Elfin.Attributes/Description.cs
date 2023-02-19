@@ -5,7 +5,7 @@ namespace Elfin.Attributes
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class ElfinDescriptionAttribute : Attribute
     {
-        public string? Description;
+        public string Description { get; init; }
 
         public ElfinDescriptionAttribute(string description)
         {

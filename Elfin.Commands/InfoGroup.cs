@@ -8,6 +8,7 @@ namespace Elfin.Commands
     {
         [ElfinCommand("helloworld")]
         [ElfinAliases(new string[] { "hworld" })]
+        [ElfinDescription("Hello, world!")]
         public static async Task HelloWorld(DiscordMessage message, string[] args)
         {
             await message.RespondAsync("Hello, world!");
@@ -15,6 +16,7 @@ namespace Elfin.Commands
 
         [ElfinCommand("userinfo")]
         [ElfinAliases(new string[] { "uinfo" })]
+        [ElfinDescription("Sends information on a user.")]
         public static async Task UserInfo(DiscordMessage message, string[] args)
         {
             await message.RespondAsync("some info here idk!");

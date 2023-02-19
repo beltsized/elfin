@@ -4,9 +4,9 @@ namespace Elfin.Types
 {
     public class ElfinCommand
     {
-        public required string Name;
-        public required string[] Aliases;
-        public Action<DiscordMessage, string[]>? Respond;
+        public required string Name { get; init; }
+        public required string[] Aliases { get; init; }
+        public required Action<DiscordMessage, string[]>? Respond { get; init; }
         public bool Enabled = true;
 
         public ElfinCommand()
