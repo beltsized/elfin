@@ -1,8 +1,11 @@
 using Elfin.Types;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 using System.Net.Http;
 
@@ -26,6 +29,11 @@ namespace Elfin.Core
                 TokenType = TokenType.Bot,
                 Intents = data.Intents,
                 MinimumLogLevel = data.LogLevel
+            });
+
+            this.RawClient.UseInteractivity(new InteractivityConfiguration()
+            {
+                Timeout = TimeSpan.FromSeconds(30)
             });
 
             this.HttpClient = new HttpClient();
