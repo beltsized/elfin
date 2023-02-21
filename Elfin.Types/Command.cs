@@ -7,6 +7,8 @@ namespace Elfin.Types
     {
         public required string Name { get; init; }
         public required string[] Aliases { get; init; }
+        public required string Usage { get; init; }
+        public required string Description { get; init; }
         public required Action<ElfinClient, ElfinCommandContext>? Respond { get; init; }
         public bool Enabled = true;
 
@@ -17,6 +19,8 @@ namespace Elfin.Types
         {
             this.Name = commandData.Name;
             this.Aliases = commandData.Aliases;
+            this.Usage = commandData.Usage;
+            this.Description = commandData.Description;
         }
     }
 }

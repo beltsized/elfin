@@ -1,21 +1,65 @@
 using Elfin.Attributes;
 using Elfin.Types;
 using Elfin.Core;
-using DSharpPlus;
 using DSharpPlus.Entities;
-using Newtonsoft.Json;
+using System;
 
 namespace Elfin.Commands
 {
     [ElfinGroup("info")]
     public class ElfinInfoCommandGroup
     {
+        [ElfinCommand("help")]
+        [ElfinAliases(new string[] { "commands", "helpme" })]
+        [ElfinUsage("[command name]")]
+        [ElfinDescription("Sends the command list.")]
+        public static async Task Help(ElfinClient elfin, ElfinCommandContext context)
+        {
+            DiscordEmbedBuilder embed = new()
+            {
+                Author = new DiscordEmbedBuilder.EmbedAuthor(),
+                Color = new DiscordColor("#2F3136"),
+            };
+
+            if (context.Args.Length == 0)
+            {
+                string[] commands = elfin.Commands.Select(c => $"`{elfin.Prefix}{c.Name}`").ToArray();
+
+                embed.Author.Name = $"{commands.Length} commands";
+                embed.Description = string.Join("\n", commands);
+            }
+            else
+            {
+                ElfinCommand? command = elfin.GetCommand(context.Args[0]);
+
+                if (command == null)
+                {
+                    await context.Message.RespondAsync("No command found.");
+                }
+                else
+                {
+                    string[] aliases = command.Aliases.Select(a => $"`{a}`").ToArray();
+
+                    embed.Author.Name = $"{elfin.Prefix}{command.Name}";
+                    embed.Description = $@"
+                        {command.Description}
+
+                        Aliases: {string.Join(", ", aliases)}
+                        Usage: `{command.Usage}`
+                    ";
+                }
+            }
+
+            await context.Message.RespondAsync(embed.Build());
+        }
+
         [ElfinCommand("userinfo")]
         [ElfinAliases(new string[] { "uinfo", "uinf", "ui" })]
+        [ElfinUsage("[user mention]")]
         [ElfinDescription("Sends information on any specified user.")]
         public static async Task UserInfo(ElfinClient elfin, ElfinCommandContext context)
         {
-            DiscordMessage message = context.Packet.Message;
+            DiscordMessage message = context.Message;
             IReadOnlyList<DiscordUser> mentions = message.MentionedUsers;
 
             if (mentions.Count == 0)
@@ -41,8 +85,8 @@ namespace Elfin.Commands
                         Joined: `{user.JoinedAt.ToString("MM/dd/yy")}`
                         Deafened: `{user.IsDeafened}`
                         Robotic: `{user.IsBot.ToString()}`
-                        Roles: `{user.Roles.ToArray().Length}`
                         Systematic: `{(user.IsSystem != null ? "True" : "False")}`
+                        Roles: `{user.Roles.ToArray().Length}`
                     "
                 };
 

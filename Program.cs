@@ -21,11 +21,12 @@ namespace Elfin
                 Token = Environment.GetEnvironmentVariable("DISCORDTOKEN")!,
                 Intents = DiscordIntents.All,
                 LogLevel = LogLevel.None,
-                Prefix = "elf."
+                Prefix = "!"
             });
 
             elfin.LoadCommands();
             elfin.LoadEvents();
+
             await elfin.Login();
         }
     }

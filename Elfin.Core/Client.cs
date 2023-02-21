@@ -70,7 +70,7 @@ namespace Elfin.Core
 
         public ElfinCommand? GetCommand(string name)
         {
-            return this.Commands.First(command => IsCompatible(name, command));
+            return this.Commands.FirstOrDefault(command => IsCompatible(name, command));
         }
 
         public void HandlePossibleCommand(MessageCreateEventArgs packet)
@@ -89,6 +89,10 @@ namespace Elfin.Core
                     ElfinCommandContext context = new()
                     {
                         Packet = packet,
+                        Author = packet.Author,
+                        Guild = packet.Guild,
+                        Channel = packet.Channel,
+                        Message = message,
                         Args = components[1..]
                     };
 

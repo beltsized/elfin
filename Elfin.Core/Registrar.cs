@@ -17,20 +17,27 @@ namespace Elfin.Core
 
         public IEnumerable<Type> GetTypesWithAttribute<T>() where T : Attribute
         {
-            return typeof(Program).Assembly.GetTypes().Where(type => type.GetCustomAttributes(typeof(T), true).Length > 0);
+            return typeof(Program).Assembly.GetTypes().Where(t => t.GetCustomAttributes(typeof(T), true).Length > 0);
         }
 
         public ElfinCommand[] ReadCommands()
         {
             List<ElfinCommand> commands = new List<ElfinCommand>();
             IEnumerable<Type> groupClasses = GetTypesWithAttribute<ElfinGroupAttribute>();
-            IEnumerable<MethodInfo> commandClasses = groupClasses.SelectMany(type => type.GetMethods());
+            IEnumerable<MethodInfo> groupMethods = groupClasses.SelectMany(t => t.GetMethods());
 
-            foreach (MethodInfo command in commandClasses)
+            foreach (MethodInfo method in groupMethods)
             {
+                if (method.GetCustomAttribute(typeof(ElfinCommandAttribute)) == null)
+                {
+                    continue;
+                }
+
                 string commandName = "";
                 string[] aliases = { };
-                IEnumerable<Attribute> attributes = command.GetCustomAttributes();
+                string usage = "";
+                string description = "";
+                IEnumerable<Attribute> attributes = method.GetCustomAttributes();
 
                 foreach (Attribute attr in attributes)
                 {
@@ -44,6 +51,15 @@ namespace Elfin.Core
                             break;
                         case ElfinAliasesAttribute:
                             aliases = ((ElfinAliasesAttribute)attr).Aliases;
+
+                            break;
+                        case ElfinUsageAttribute:
+                            usage = ((ElfinUsageAttribute)attr).Usage;
+
+                            break;
+                        case ElfinDescriptionAttribute:
+                            description = ((ElfinDescriptionAttribute)attr).Description;
+
                             break;
                     }
                 }
@@ -52,7 +68,9 @@ namespace Elfin.Core
                 {
                     Name = commandName,
                     Aliases = aliases,
-                    Respond = (ElfinClient elfin, ElfinCommandContext context) => command.Invoke(null, new object[] { elfin, context })
+                    Usage = usage,
+                    Description = description,
+                    Respond = (ElfinClient elfin, ElfinCommandContext context) => method.Invoke(null, new object[] { elfin, context })
                 };
 
                 commands.Add(newCommand);

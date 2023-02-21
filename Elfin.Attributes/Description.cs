@@ -1,5 +1,3 @@
-using System;
-
 namespace Elfin.Attributes
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
