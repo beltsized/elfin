@@ -4,10 +4,6 @@ using DSharpPlus.Entities;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.EventArgs;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
-using System.Net.Http;
 
 namespace Elfin.Core
 {
@@ -65,7 +61,7 @@ namespace Elfin.Core
         {
             this.Events = this.Registrar.ReadEvents();
 
-            foreach (ElfinEvent ev in this.Events)
+            foreach (var ev in this.Events)
             {
                 ev.Initialize();
             }
@@ -83,18 +79,18 @@ namespace Elfin.Core
 
         public void HandlePossibleCommand(MessageCreateEventArgs packet)
         {
-            DiscordMessage message = packet.Message;
-            string messageContent = message.Content;
+            var message = packet.Message;
+            var messageContent = message.Content;
 
             if (!message.Author.IsBot && messageContent.StartsWith(this.Prefix))
             {
-                string[] components = messageContent.Split(" ");
-                string commandName = components[0].Replace(this.Prefix, "").ToLower();
-                ElfinCommand? command = this.GetCommand(commandName);
+                var components = messageContent.Split(" ");
+                var commandName = components[0].Replace(this.Prefix, "").ToLower();
+                var command = this.GetCommand(commandName);
 
                 if (command != null && command.Enabled)
                 {
-                    ElfinCommandContext context = new()
+                    var context = new ElfinCommandContext()
                     {
                         Packet = packet,
                         Author = packet.Author,

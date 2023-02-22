@@ -1,8 +1,6 @@
 using Elfin.Attributes;
 using Elfin.Types;
 using System.Reflection;
-using System.Linq;
-using DSharpPlus.Entities;
 
 namespace Elfin.Core
 {
@@ -22,26 +20,26 @@ namespace Elfin.Core
 
         public ElfinCommand[] ReadCommands()
         {
-            List<ElfinCommand> commands = new List<ElfinCommand>();
-            IEnumerable<Type> groupClasses = GetTypesWithAttribute<ElfinGroupAttribute>();
-            IEnumerable<MethodInfo> groupMethods = groupClasses.SelectMany(t => t.GetMethods());
+            var commands = new List<ElfinCommand>();
+            var groupClasses = GetTypesWithAttribute<ElfinGroupAttribute>();
+            var groupMethods = groupClasses.SelectMany(t => t.GetMethods());
 
-            foreach (MethodInfo method in groupMethods)
+            foreach (var method in groupMethods)
             {
                 if (method.GetCustomAttribute(typeof(ElfinCommandAttribute)) == null)
                 {
                     continue;
                 }
 
-                string commandName = "";
-                string[] aliases = { };
-                string usage = "";
-                string description = "";
-                IEnumerable<Attribute> attributes = method.GetCustomAttributes();
+                var commandName = "";
+                var aliases = new string[] { };
+                var usage = "";
+                var description = "";
+                var attributes = method.GetCustomAttributes();
 
-                foreach (Attribute attr in attributes)
+                foreach (var attr in attributes)
                 {
-                    string? attrName = attr.ToString();
+                    var attrName = attr.ToString();
 
                     switch (attr)
                     {
@@ -64,13 +62,16 @@ namespace Elfin.Core
                     }
                 }
 
-                ElfinCommand newCommand = new()
+                var newCommand = new ElfinCommand()
                 {
                     Name = commandName,
                     Aliases = aliases,
                     Usage = usage,
                     Description = description,
-                    Respond = (ElfinClient elfin, ElfinCommandContext context) => method.Invoke(null, new object[] { elfin, context })
+                    Respond = (ElfinClient elfin, ElfinCommandContext context) =>
+                    {
+                        method.Invoke(null, new object[] { elfin, context });
+                    }
                 };
 
                 commands.Add(newCommand);
@@ -81,16 +82,16 @@ namespace Elfin.Core
 
         public ElfinEvent[] ReadEvents()
         {
-            List<ElfinEvent> events = new List<ElfinEvent>();
-            IEnumerable<Type> eventClasses = GetTypesWithAttribute<ElfinEventAttribute>();
+            var events = new List<ElfinEvent>();
+            var eventClasses = GetTypesWithAttribute<ElfinEventAttribute>();
 
             foreach (Type ev in eventClasses)
             {
-                MethodInfo? initializer = ev.GetMethod("Initalize");
-                Attribute? attr = ev.GetCustomAttribute(typeof(ElfinEventAttribute));
-                string eventName = ((ElfinEventAttribute)attr!).Name;
+                var initializer = ev.GetMethod("Initalize");
+                var attr = ev.GetCustomAttribute(typeof(ElfinEventAttribute));
+                var eventName = ((ElfinEventAttribute)attr!).Name;
 
-                ElfinEvent newEvent = new()
+                var newEvent = new ElfinEvent()
                 {
                     Name = eventName,
                     Initialize = () => initializer!.Invoke(null, new object[] { this.Client })

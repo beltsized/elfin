@@ -2,7 +2,6 @@ using Elfin.Attributes;
 using Elfin.Types;
 using Elfin.Core;
 using DSharpPlus.Entities;
-using System;
 
 namespace Elfin.Commands
 {
@@ -59,8 +58,8 @@ namespace Elfin.Commands
         [ElfinDescription("Sends information on any specified user.")]
         public static async Task UserInfo(ElfinClient elfin, ElfinCommandContext context)
         {
-            DiscordMessage message = context.Message;
-            IReadOnlyList<DiscordUser> mentions = message.MentionedUsers;
+            var message = context.Message;
+            var mentions = message.MentionedUsers;
 
             if (mentions.Count == 0)
             {
@@ -68,8 +67,8 @@ namespace Elfin.Commands
             }
             else
             {
-                DiscordMember user = await context.Packet.Guild.GetMemberAsync(mentions[0].Id);
-                DiscordEmbedBuilder embed = new()
+                var user = await context.Packet.Guild.GetMemberAsync(mentions[0].Id);
+                var embed = new DiscordEmbedBuilder()
                 {
                     Color = user.Color,
                     Thumbnail = new DiscordEmbedBuilder.EmbedThumbnail

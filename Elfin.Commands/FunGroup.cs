@@ -3,12 +3,11 @@ using Elfin.Types;
 using Elfin.Core;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
-using DSharpPlus.Interactivity.EventHandling;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Entities;
-using Newtonsoft.Json;
-using System;
+using System.Text.Json;
 using System.Web;
+using System.Net.Http.Json;
 using System.Text;
 using Owoify;
 
@@ -32,11 +31,9 @@ namespace Elfin.Commands
         [ElfinDescription("Sends a random image of a neko.")]
         public static async Task Neko(ElfinClient elfin, ElfinCommandContext context)
         {
-            HttpResponseMessage response = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/neko");
-            string rawResponse = await response.Content.ReadAsStringAsync();
-            dynamic? data = JsonConvert.DeserializeObject(rawResponse);
+            var response = await elfin.HttpClient.GetFromJsonAsync<NekosLifeResponse>("https://nekos.life/api/v2/img/neko");
 
-            await context.Message.RespondAsync(data!.url);
+            await context.Message.RespondAsync(response!.Url);
         }
 
         [ElfinCommand("8ball")]
@@ -51,11 +48,9 @@ namespace Elfin.Commands
             }
             else
             {
-                HttpResponseMessage response = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/8ball");
-                string rawData = await response.Content.ReadAsStringAsync();
-                dynamic? data = JsonConvert.DeserializeObject(rawData);
+                var response = await elfin.HttpClient.GetFromJsonAsync<NekosLifeResponse>("https://nekos.life/api/v2/img/8ball");
 
-                await context.Message.RespondAsync(data!.url);
+                await context.Message.RespondAsync(response!.Url);
             }
         }
 
@@ -71,17 +66,7 @@ namespace Elfin.Commands
             }
             else
             {
-                DiscordEmbedBuilder embed = new()
-                {
-                    Color = new DiscordColor("#2F3136"),
-                    Author = new DiscordEmbedBuilder.EmbedAuthor()
-                    {
-                        Name = Owoifier.Owoify(string.Join(" ", context.Args), Owoifier.OwoifyLevel.Uvu),
-                        IconUrl = context.Author.AvatarUrl
-                    }
-                };
-
-                await context.Message.RespondAsync(embed.Build());
+                await context.Message.RespondAsync(Owoifier.Owoify(string.Join(" ", context.Args), Owoifier.OwoifyLevel.Uvu));
             }
         }
 
@@ -97,7 +82,7 @@ namespace Elfin.Commands
             }
             else
             {
-                string searchGraphQL = @"
+                var searchGraphQL = @"
                     query ($search: String) {
                         characters: Page (perPage: 1) {
                             results: characters (search: $search) { id }
@@ -105,7 +90,7 @@ namespace Elfin.Commands
                     }
                 ";
 
-                string characterGraphQL = @"
+                var characterGraphQL = @"
                     query ($id: Int!) {
                         Character(id: $id) {
                             id
@@ -131,89 +116,86 @@ namespace Elfin.Commands
                     }
                 ";
 
-                string characterName = string.Join(" ", context.Args);
-                dynamic? sJSON = JsonConvert.SerializeObject(new
+                var characterName = string.Join(" ", context.Args);
+                var serialized = JsonSerializer.Serialize(new
                 {
                     variables = new { search = characterName },
                     query = searchGraphQL
                 });
 
-                StringContent sBody = new(sJSON, Encoding.UTF8, "application/json");
-                HttpResponseMessage sResponse = await elfin.HttpClient.PostAsync("https://graphql.anilist.co/", sBody);
-                string sRawData = await sResponse.Content.ReadAsStringAsync();
+                var payload = new StringContent(serialized, Encoding.UTF8, "application/json");
+                var feed = await elfin.HttpClient.PostAsync("https://graphql.anilist.co/", payload);
+                var raw = await feed.Content.ReadAsStringAsync();
 
-                if (sRawData == "")
+                if (raw == "")
                 {
                     await context.Message.RespondAsync("No character found.");
                 }
                 else
                 {
-                    dynamic? sData = JsonConvert.DeserializeObject(sRawData);
+                    var response = JsonSerializer.Deserialize<AniListResponse>(raw);
 
-                    if (sData!.data.characters.results.Count == 0)
+                    if (response!.Data!.Characters!.Results.Length == 0)
                     {
                         await context.Message.RespondAsync("No character found.");
                     }
                     else
                     {
-                        string characterId = sData!.data.characters.results[0].id;
-                        dynamic? fJSON = JsonConvert.SerializeObject(new
+                        var characterId = response!.Data.Characters.Results[0].Id;
+                        var tserialized = JsonSerializer.Serialize(new
                         {
                             variables = new { id = characterId },
                             query = characterGraphQL
                         });
 
-                        StringContent fBody = new(fJSON, Encoding.UTF8, "application/json");
-                        HttpResponseMessage fResponse = await elfin.HttpClient.PostAsync("https://graphql.anilist.co/", fBody);
-                        string fRawData = await fResponse.Content.ReadAsStringAsync();
-                        dynamic? fData = JsonConvert.DeserializeObject(fRawData);
-                        dynamic? character = fData!.data.Character;
-                        dynamic? imageData = character.image;
-                        string? image = imageData.large == null
-                            ? (imageData.medium == null ? null : imageData.medium)
-                            : imageData.large;
-                        string siteUrl = character.siteUrl;
-                        string fullName = $"{character.name.full}";
-
-                        DiscordEmbedBuilder.EmbedAuthor author = new()
+                        var tpayload = new StringContent(tserialized, Encoding.UTF8, "application/json");
+                        var tfeed = await elfin.HttpClient.PostAsync("https://graphql.anilist.co/", tpayload);
+                        var traw = await tfeed.Content.ReadAsStringAsync();
+                        var tresponse = JsonSerializer.Deserialize<AniListResponse>(traw);
+                        var character = tresponse!.Data.Character;
+                        var imageData = character!.Image;
+                        var siteUrl = character.SiteUrl;
+                        var fullName = $"{character.Name.Full}";
+                        var bloodType = (character.BloodType == "" ? "" : character.BloodType) ?? "N/A";
+                        var author = new DiscordEmbedBuilder.EmbedAuthor()
                         {
                             Name = "AniList",
                             IconUrl = "https://i.imgur.com/iUIRC7v.png",
                             Url = "https://anilist.co"
                         };
 
-                        DiscordEmbedBuilder.EmbedThumbnail thumbnail = new()
+                        var thumbnail = new DiscordEmbedBuilder.EmbedThumbnail()
                         {
-                            Url = image
+                            Url = character.Image.Large
                         };
 
-                        Page[] pages = {
-                            new("", new DiscordEmbedBuilder() {
+                        var pages = new[] {
+                            new Page("", new DiscordEmbedBuilder() {
                                 Color = new DiscordColor("#2F3136"),
                                 Author = author,
                                 Url = siteUrl,
                                 Title = fullName,
                                 Thumbnail = thumbnail,
                                 Description = $@"
-                                    Id: `{character.id}`
-                                    Films: `{character.media.edges.Count}`
-                                    Gender: `{character.gender}`
-                                    Age: `{(character.age == null ? "N/A" : character.age)}`
-                                    Favourites: `{character.favourites}`
-                                    Blood type: `{(character.bloodType == null ? "N/A" : character.bloodType)}`
+                                    Id: `{character.Id}`
+                                    Films: `{character.Media.Edges.Count}`
+                                    Gender: `{character.Gender}`
+                                    Age: `{(character.Age ?? "N/A")}`
+                                    Favourites: `{character.Favourites}`
+                                    Blood type: `{(bloodType)}`
                                 "
                             }),
-                            new("", new DiscordEmbedBuilder() {
+                            new Page("", new DiscordEmbedBuilder() {
                                 Color = new DiscordColor("#2F3136"),
                                 Author = author,
                                 Thumbnail = thumbnail,
                                 Url = siteUrl,
                                 Title = fullName,
-                                Description = $"{character.description.Value.ToString().Substring(0, 2043)}`...`"
+                                Description = $"{character.Description.Substring(0, 2043)}`...`"
                             })
                         };
 
-                        InteractivityExtension interactivity = elfin.RawClient.GetInteractivity();
+                        var interactivity = elfin.RawClient.GetInteractivity();
 
                         await context.Channel.SendPaginatedMessageAsync(
                             context.Author, pages.Cast<Page>(),
@@ -235,21 +217,21 @@ namespace Elfin.Commands
             }
             else
             {
-                string query = HttpUtility.UrlEncode(string.Join(" ", context.Args));
-                HttpResponseMessage response = await elfin.HttpClient.GetAsync($"https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&tags={query}&limit=1000");
-                string rawData = await response.Content.ReadAsStringAsync();
+                var query = HttpUtility.UrlEncode(string.Join(" ", context.Args));
+                var feed = await elfin.HttpClient.GetAsync($"https://safebooru.org/index.php?page=dapi&s=post&q=index&json=1&tags={query}&limit=1000");
+                var raw = await feed.Content.ReadAsStringAsync();
 
-                if (rawData == "")
+                if (raw == "")
                 {
                     await context.Message.RespondAsync("No images found.");
                 }
                 else
                 {
-                    dynamic? data = JsonConvert.DeserializeObject(rawData);
-                    Random random = new();
-                    dynamic? pick = data![random.Next(0, data.Count)];
+                    var response = JsonSerializer.Deserialize<List<SafeBooruResponse>>(raw);
+                    var random = new Random();
+                    var pick = response![random.Next(0, response.Count)];
 
-                    await context.Message.RespondAsync($"https://safebooru.org/images/{pick.directory}/{pick.image}");
+                    await context.Message.RespondAsync($"https://safebooru.org/images/{pick.Directory}/{pick.Image}");
                 }
             }
         }
