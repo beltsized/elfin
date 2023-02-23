@@ -7,7 +7,6 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Entities;
 using System.Text.Json;
 using System.Web;
-using System.Net.Http.Json;
 using System.Text;
 using Owoify;
 
@@ -16,8 +15,13 @@ namespace Elfin.Commands
     [ElfinGroup("fun")]
     public class ElfinFunCommandGroup
     {
+        public static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         [ElfinCommand("helloworld")]
-        [ElfinAliases(new string[] { "hworld" })]
+        [ElfinAliases(new[] { "hworld" })]
         [ElfinUsage("[]")]
         [ElfinDescription("Hello, world!")]
         public static async Task HelloWorld(ElfinClient elfin, ElfinCommandContext context)
@@ -26,18 +30,20 @@ namespace Elfin.Commands
         }
 
         [ElfinCommand("neko")]
-        [ElfinAliases(new string[] { "nekoimg", "nekoimage" })]
+        [ElfinAliases(new[] { "nekoimg", "nekoimage" })]
         [ElfinUsage("[]")]
         [ElfinDescription("Sends a random image of a neko.")]
         public static async Task Neko(ElfinClient elfin, ElfinCommandContext context)
         {
-            var response = await elfin.HttpClient.GetFromJsonAsync<NekosLifeResponse>("https://nekos.life/api/v2/img/neko");
+            var feed = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/neko");
+            var raw = await feed.Content.ReadAsStringAsync();
+            var response = JsonSerializer.Deserialize<NekosLifeResponse>(raw, SerializerOptions);
 
             await context.Message.RespondAsync(response!.Url);
         }
 
         [ElfinCommand("8ball")]
-        [ElfinAliases(new string[] { "8b" })]
+        [ElfinAliases(new[] { "8b" })]
         [ElfinUsage("[question]")]
         [ElfinDescription("Lets the 8ball determine your decision.")]
         public static async Task EightBall(ElfinClient elfin, ElfinCommandContext context)
@@ -48,14 +54,16 @@ namespace Elfin.Commands
             }
             else
             {
-                var response = await elfin.HttpClient.GetFromJsonAsync<NekosLifeResponse>("https://nekos.life/api/v2/img/8ball");
+                var feed = await elfin.HttpClient.GetAsync("https://nekos.life/api/v2/img/8ball");
+                var raw = await feed.Content.ReadAsStringAsync();
+                var response = JsonSerializer.Deserialize<NekosLifeResponse>(raw, SerializerOptions);
 
                 await context.Message.RespondAsync(response!.Url);
             }
         }
 
         [ElfinCommand("owoify")]
-        [ElfinAliases(new string[] { "owo" })]
+        [ElfinAliases(new[] { "owo" })]
         [ElfinUsage("[text]")]
         [ElfinDescription("Let the OwO gods decide your next words.")]
         public static async Task Owoify(ElfinClient elfin, ElfinCommandContext context)
@@ -71,7 +79,7 @@ namespace Elfin.Commands
         }
 
         [ElfinCommand("animecharacter")]
-        [ElfinAliases(new string[] { "anichar", "animechar" })]
+        [ElfinAliases(new[] { "anichar", "animechar" })]
         [ElfinUsage("[character name]")]
         [ElfinDescription("Sends information on an anime character.")]
         public static async Task AnimeCharacter(ElfinClient elfin, ElfinCommandContext context)
@@ -133,7 +141,7 @@ namespace Elfin.Commands
                 }
                 else
                 {
-                    var response = JsonSerializer.Deserialize<AniListResponse>(raw);
+                    var response = JsonSerializer.Deserialize<AniListResponse>(raw, SerializerOptions);
 
                     if (response!.Data!.Characters!.Results.Length == 0)
                     {
@@ -151,12 +159,12 @@ namespace Elfin.Commands
                         var tpayload = new StringContent(tserialized, Encoding.UTF8, "application/json");
                         var tfeed = await elfin.HttpClient.PostAsync("https://graphql.anilist.co/", tpayload);
                         var traw = await tfeed.Content.ReadAsStringAsync();
-                        var tresponse = JsonSerializer.Deserialize<AniListResponse>(traw);
+                        var tresponse = JsonSerializer.Deserialize<AniListResponse>(traw, SerializerOptions);
                         var character = tresponse!.Data.Character;
-                        var imageData = character!.Image;
-                        var siteUrl = character.SiteUrl;
+                        var siteUrl = character!.SiteUrl;
                         var fullName = $"{character.Name.Full}";
-                        var bloodType = (character.BloodType == "" ? "" : character.BloodType) ?? "N/A";
+                        var description = character.Description;
+
                         var author = new DiscordEmbedBuilder.EmbedAuthor()
                         {
                             Name = "AniList",
@@ -182,7 +190,7 @@ namespace Elfin.Commands
                                     Gender: `{character.Gender}`
                                     Age: `{(character.Age ?? "N/A")}`
                                     Favourites: `{character.Favourites}`
-                                    Blood type: `{(bloodType)}`
+                                    Blood type: `{character.BloodType ?? "N/A"}`
                                 "
                             }),
                             new Page("", new DiscordEmbedBuilder() {
@@ -191,7 +199,7 @@ namespace Elfin.Commands
                                 Thumbnail = thumbnail,
                                 Url = siteUrl,
                                 Title = fullName,
-                                Description = $"{character.Description.Substring(0, 2043)}`...`"
+                                Description = $"{description[..(Math.Min(description.Length - 1, 2042))]}`...`"
                             })
                         };
 
@@ -208,7 +216,7 @@ namespace Elfin.Commands
         }
 
         [ElfinCommand("safebooru")]
-        [ElfinAliases(new string[] { "hi" })]
+        [ElfinAliases(new[] { "hi" })]
         public static async Task SafeBooru(ElfinClient elfin, ElfinCommandContext context)
         {
             if (context.Args.Length == 0)
@@ -227,9 +235,9 @@ namespace Elfin.Commands
                 }
                 else
                 {
-                    var response = JsonSerializer.Deserialize<List<SafeBooruResponse>>(raw);
+                    var response = JsonSerializer.Deserialize<List<SafeBooruResponse>>(raw, SerializerOptions);
                     var random = new Random();
-                    var pick = response![random.Next(0, response.Count)];
+                    var pick = response![random.Next(0, response!.Count)];
 
                     await context.Message.RespondAsync($"https://safebooru.org/images/{pick.Directory}/{pick.Image}");
                 }

@@ -77,7 +77,7 @@ namespace Elfin.Core
             return this.Commands.FirstOrDefault(command => IsCompatible(name, command));
         }
 
-        public void HandlePossibleCommand(MessageCreateEventArgs packet)
+        public async Task HandlePossibleCommand(MessageCreateEventArgs packet)
         {
             var message = packet.Message;
             var messageContent = message.Content;
@@ -100,7 +100,7 @@ namespace Elfin.Core
                         Args = components[1..]
                     };
 
-                    command.Respond!(this, context);
+                    await command.Respond!(this, context);
                 }
             }
         }

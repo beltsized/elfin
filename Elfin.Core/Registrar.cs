@@ -68,9 +68,9 @@ namespace Elfin.Core
                     Aliases = aliases,
                     Usage = usage,
                     Description = description,
-                    Respond = (ElfinClient elfin, ElfinCommandContext context) =>
+                    Respond = async (ElfinClient elfin, ElfinCommandContext context) =>
                     {
-                        method.Invoke(null, new object[] { elfin, context });
+                        await (Task)method.Invoke(null, new object[] { elfin, context })!;
                     }
                 };
 

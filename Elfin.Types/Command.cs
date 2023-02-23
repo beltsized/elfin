@@ -9,7 +9,7 @@ namespace Elfin.Types
         public required string[] Aliases { get; init; }
         public required string Usage { get; init; }
         public required string Description { get; init; }
-        public required Action<ElfinClient, ElfinCommandContext>? Respond { get; init; }
+        public required Func<ElfinClient, ElfinCommandContext, Task> Respond { get; init; }
         public bool Enabled = true;
 
         public ElfinCommand()
